@@ -1,0 +1,95 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Wyszukiwarka mieszkań</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        th { background-color: #f2f2f2; }
+        input[type="number"] { width: 80px; }
+        select { width: 100px; }
+    </style>
+</head>
+<body>
+<h1>Wyszukiwarka mieszkań na sprzedaż</h1>
+
+<form method="POST">
+    Miasto: <input type="text" name="city"><br><br>
+
+    Liczba pokoi: <input type="number" name="min_rooms" min="1"><br><br>
+
+    Metraż (m²): 
+    Od: <input type="number" name="min_square" min="20" max="200" value="50">
+    Do: <input type="number" name="max_square" min="20" max="200" value="100">
+    <br><br>
+
+    Cena (PLN):
+    Od: <input type="number" name="min_price" min="50000" max="2000000" value="100000" step="10000">
+    Do: <input type="number" name="max_price" min="50000" max="2000000" value="500000" step="10000">
+    <br><br>
+
+    Minimalne piętro: <input type="number" name="min_floor"><br><br>
+    Maksymalna liczba pięter w budynku: <input type="number" name="max_floor_count"><br><br>
+
+    Przedszkole w pobliżu: 
+    <select name="kindergarten">
+        <option value="">Dowolne</option>
+        <option value="yes">Tak</option>
+    </select><br><br>
+
+    Szkoła w pobliżu: 
+    <select name="school">
+        <option value="">Dowolne</option>
+        <option value="yes">Tak</option>
+    </select><br><br>
+
+    Balkon: 
+    <select name="balcony">
+        <option value="" {% if filters.get('balcony')=='' %}selected{% endif %}>Dowolne</option>
+        <option value="yes" {% if filters.get('balcony')=='yes' %}selected{% endif %}>Tak</option>
+    </select><br><br>
+
+    Winda: 
+    <select name="elevator">
+        <option value="" {% if filters.get('elevator')=='' %}selected{% endif %}>Dowolne</option>
+        <option value="yes" {% if filters.get('elevator')=='yes' %}selected{% endif %}>Tak</option>
+    </select><br><br>
+
+
+    <input type="submit" value="Szukaj">
+</form>
+
+<h2>Wyniki:</h2>
+<table>
+    <tr>
+        <th>Miasto</th>
+        <th>Pokoje</th>
+        <th>Metraż (m²)</th>
+        <th>Piętro</th>
+        <th>Liczba pięter</th>
+        <th>Cena (PLN)</th>
+        <th>Przedszkole (km)</th>
+        <th>Szkoła (km)</th>
+        <th>Balkon</th>
+        <th>Winda</th>
+    </tr>
+    {% for row in results %}
+    <tr>
+        <td>{{ row[1] }}</td> <!-- Miasto -->
+        <td>{{ row[4]|int }}</td> <!-- Pokoje -->
+        <td>{{ row[3]|round(2) }}</td> <!-- Metraż -->
+        <td>{{ row[5]|int }}</td> <!-- Piętro -->
+        <td>{{ row[6]|int }}</td> <!-- Liczba pięter -->
+        <td>{{ row[27]|int }}</td> <!-- Cena -->
+        <td>{{ row[15]|round(2) }}</td> <!-- Przedszkole -->
+        <td>{{ row[13]|round(2) }}</td> <!-- Szkoła -->
+        <td>{{ row[24] }}</td> <!-- Balkon -->
+        <td>{{ row[25] }}</td> <!-- Winda -->
+    </tr>
+    {% endfor %}
+</table>
+</body>
+</html>
