@@ -1,154 +1,360 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Wyszukiwarka mieszkań</title>
+    <title>Wyszukiwarka mieszkań - Wrocław</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-        th { background-color: #f2f2f2; }
-        input[type="number"] { width: 80px; }
-        select { width: 100px; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        .form-section {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .form-row {
+            margin-bottom: 10px;
+        }
+        label {
+            display: inline-block;
+            width: 200px;
+            font-weight: bold;
+        }
+        input[type="number"], input[type="text"], select {
+            padding: 5px;
+            border: 1px solid #bdc3c7;
+            border-radius: 3px;
+        }
+        input[type="submit"] {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        input[type="submit"]:hover {
+            background-color: #2980b9;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #bdc3c7;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .chart {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .chart img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .wiki-box {
+            background-color: #fff9e6;
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .similarity-box {
+            background-color: #e8f8f5;
+            border-left: 4px solid #1abc9c;
+            padding: 10px;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
-<h1>Wyszukiwarka mieszkań na sprzedaż</h1>
 
-<form method="POST">
-    Miasto: 
-    <select name="city">
-        <option value="">Dowolne</option>
-        {% for city in cities %}
-            <option value="{{ city }}" {% if filters.get('city') == city %}selected{% endif %}>
-                {{ city_map[city] }}
-            </option>
+<div class="container">
+    <h1>🏠 Wyszukiwarka mieszkań na sprzedaż - Wrocław</h1>
+
+    <div class="form-section">
+        <h2>Wyszukiwanie po słowach kluczowych (TF-IDF)</h2>
+        <form method="POST">
+            <div class="form-row">
+                <label>Słowa kluczowe:</label>
+                <input type="text" name="search" placeholder="np. tanie balkon parking" 
+                       value="{{ request.form.get('search', '') }}" style="width: 300px;">
+                <input type="submit" value="Szukaj">
+            </div>
+        </form>
+    </div>
+
+    <div class="form-section">
+        <h2>Filtry mieszkań</h2>
+        <form method="POST">
+            <div class="form-row">
+                <label>Min. liczba pokoi:</label>
+                <input type="number" name="min_rooms" min="1" step="1" 
+                       value="{{ filters.get('min_rooms', '') }}">
+            </div>
+            
+            <div class="form-row">
+                <label>Metraż od (m²):</label>
+                <input type="number" name="min_square" value="{{ filters.get('min_square', '') }}">
+                <label style="width: 50px; margin-left: 10px;">do:</label>
+                <input type="number" name="max_square" value="{{ filters.get('max_square', '') }}">
+            </div>
+            
+            <div class="form-row">
+                <label>Cena od (zł):</label>
+                <input type="number" name="min_price" value="{{ filters.get('min_price', '') }}">
+                <label style="width: 50px; margin-left: 10px;">do:</label>
+                <input type="number" name="max_price" value="{{ filters.get('max_price', '') }}">
+            </div>
+            
+            <div class="form-row">
+                <label>Min. piętro:</label>
+                <input type="number" name="min_floor" value="{{ filters.get('min_floor', '') }}">
+            </div>
+            
+            <div class="form-row">
+                <label>Max. pięter w budynku:</label>
+                <input type="number" name="max_floor_count" value="{{ filters.get('max_floor_count', '') }}">
+            </div>
+            
+            <div class="form-row">
+                <label>Rok budowy od:</label>
+                <input type="number" name="min_build_year" 
+                       value="{{ filters.get('min_build_year', '') }}">
+            </div>
+            
+            <div class="form-row">
+                <label>Max km do centrum:</label>
+                <input type="number" name="max_centre_distance" step="0.5"
+                       value="{{ filters.get('max_centre_distance', '') }}">
+            </div>
+            <div class="form-row">
+                <label>Balkon:</label>
+                <select name="balcony">
+                    <option value="">Dowolne</option>
+                    <option value="yes" {% if filters.get('balcony')=='yes' %}selected{% endif %}>Tak</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <label>Winda:</label>
+                <select name="elevator">
+                    <option value="">Dowolne</option>
+                    <option value="yes" {% if filters.get('elevator')=='yes' %}selected{% endif %}>Tak</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <label>Parking:</label>
+                <select name="parking">
+                    <option value="">Dowolne</option>
+                    <option value="yes" {% if filters.get('parking')=='yes' %}selected{% endif %}>Tak</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <label>Sortuj według:</label>
+                <select name="sort_by">
+                    <option value="">Brak</option>
+                    <option value="rooms" {% if sort_by=='rooms' %}selected{% endif %}>Pokoje</option>
+                    <option value="squareMeters" {% if sort_by=='squareMeters' %}selected{% endif %}>Metraż</option>
+                    <option value="floor" {% if sort_by=='floor' %}selected{% endif %}>Piętro</option>
+                    <option value="floorCount" {% if sort_by=='floorCount' %}selected{% endif %}>Liczba pięter</option>
+                    <option value="price" {% if sort_by=='price' %}selected{% endif %}>Cena</option>
+                </select>
+            </div>
+            
+            <input type="submit" value="Zastosuj filtry">
+        </form>
+    </div>
+
+    <div class="form-section">
+        <form method="POST">
+            <input type="hidden" name="show_wiki" value="1">
+            <input type="submit" value="Pokaż informacje o Wrocławiu (Wikipedia PL/EN)">
+        </form>
+    </div>
+
+{% if wiki_data %}
+    <div class="wiki-box">
+        <h3>📍 Informacje o Wrocławiu</h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
+            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px;">
+                <div style="font-size: 24px; font-weight: bold;">{{ "{:,}".format(wiki_data.population|int).replace(',', ' ') }}</div>
+                <div style="font-size: 12px; margin-top: 5px;">Mieszkańców</div>
+            </div>
+            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border-radius: 8px;">
+                <div style="font-size: 24px; font-weight: bold;">{{ wiki_data.area }}</div>
+                <div style="font-size: 12px; margin-top: 5px;">km²</div>
+            </div>
+            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border-radius: 8px;">
+                <div style="font-size: 24px; font-weight: bold;">{{ "{:,}".format(district_stats.avg_price|int).replace(',', ' ') }}</div>
+                <div style="font-size: 12px; margin-top: 5px;">Średnia cena (zł)</div>
+            </div>
+            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border-radius: 8px;">
+                <div style="font-size: 24px; font-weight: bold;">{{ "{:,}".format(district_stats.total_count|int).replace(',', ' ') }}</div>
+                <div style="font-size: 12px; margin-top: 5px;">Mieszkań w bazie</div>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div style="padding: 15px; background-color: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 5px;">
+                <p style="margin: 0 0 10px 0; font-weight: bold; color: #1976d2;">📝 Opis (PL)</p>
+                <p style="text-align: justify; line-height: 1.7; margin: 0; font-size: 14px;">{{ wiki_data.pl }}</p>
+            </div>
+            <div style="padding: 15px; background-color: #e8f5e9; border-left: 4px solid #4caf50; border-radius: 5px;">
+                <p style="margin: 0 0 10px 0; font-weight: bold; color: #388e3c;">📝 Description (EN)</p>
+                <p style="text-align: justify; line-height: 1.7; margin: 0; font-size: 14px;">{{ wiki_data.en }}</p>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div style="padding: 15px; background-color: #fff3e0; border-left: 4px solid #ff9800; border-radius: 5px;">
+                <p style="margin: 0 0 10px 0; font-weight: bold; color: #f57c00;">💡 Ciekawostki</p>
+                <ul style="margin: 5px 0 0 20px; padding: 0; font-size: 13px; line-height: 1.6;">
+                    {% for fact in wiki_data.interesting_facts_pl[:5] %}
+                    <li style="margin-bottom: 5px;">{{ fact }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            
+            <div style="padding: 15px; background-color: #fce4ec; border-left: 4px solid #e91e63; border-radius: 5px;">
+                <p style="margin: 0 0 10px 0; font-weight: bold; color: #c2185b;">🎯 Główne atrakcje</p>
+                <ul style="margin: 5px 0 0 20px; padding: 0; font-size: 13px; line-height: 1.6;">
+                    {% for attraction in wiki_data.attractions_pl[:5] %}
+                    <li style="margin-bottom: 5px;">{{ attraction }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 5px;">
+            <p style="margin: 0 0 10px 0; font-weight: bold; color: #424242;">📊 Statystyki mieszkań (z całej bazy - {{ district_stats.total_count }} mieszkań)</p>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                <div>
+                    <span style="color: #666;">Średnia cena:</span>
+                    <strong style="color: #1976d2;">{{ "{:,}".format(district_stats.avg_price|int).replace(',', ' ') }} zł</strong>
+                </div>
+                <div>
+                    <span style="color: #666;">Średni metraż:</span>
+                    <strong style="color: #388e3c;">{{ "%.1f"|format(district_stats.avg_sqm) }} m²</strong>
+                </div>
+                <div>
+                    <span style="color: #666;">Średnia cena za m²:</span>
+                    <strong style="color: #f57c00;">{{ "{:,}".format(district_stats.avg_price_per_sqm|int).replace(',', ' ') }} zł/m²</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
+    {% if results %}
+    <h2>Wyniki wyszukiwania ({{ results|length }} mieszkań)</h2>
+
+    {% if similarities %}
+    <div class="similarity-box">
+        <h3>📏 Miary podobieństwa dla top 10 wyników</h3>
+        <p><strong>Średnia Cosine:</strong> {{ "%.3f"|format(similarities|map(attribute='cosine')|sum / similarities|length) }}</p>
+        <p><strong>Średnia Jaccard:</strong> {{ "%.3f"|format(similarities|map(attribute='jaccard')|sum / similarities|length) }}</p>
+        <p><strong>Średnia Dice:</strong> {{ "%.3f"|format(similarities|map(attribute='dice')|sum / similarities|length) }}</p>
+    </div>
+    {% endif %}
+
+    <table>
+        <tr>
+            <th>Nr</th>
+            <th>Pokoje</th>
+            <th>Metraż (m²)</th>
+            <th>Piętro</th>
+            <th>Pięter</th>
+            <th>Cena (zł)</th>
+            <th>Rok budowy</th>
+            <th>Centrum (km)</th>
+            <th>Balkon</th>
+            <th>Winda</th>
+            <th>Parking</th>
+        </tr>
+        {% for i, row in enumerate(results[:50]) %}
+        <tr>
+            <td>{{ i + 1 }}</td>
+            <td>{{ row["rooms"]|int }}</td>
+            <td>{{ "%.2f"|format(row["squareMeters"]) }}</td>
+            <td>{{ row["floor"]|int }}</td>
+            <td>{{ row["floorCount"]|int }}</td>
+            <td>{{ "{:,}".format(row["price"]|int).replace(',', ' ') }}</td>
+            
+            <td>{{ row["buildYear"]|int }}</td>
+            <td>{{ "%.2f"|format(row["centreDistance"]) }}</td>
+            
+            <td>{{ 'Tak' if row["hasBalcony"]=='yes' else 'Nie' }}</td>
+            <td>{{ 'Tak' if row["hasElevator"]=='yes' else 'Nie' }}</td>
+            <td>{{ 'Tak' if row["hasParkingSpace"]=='yes' else 'Nie' }}</td>
+        </tr>
         {% endfor %}
-    </select>
-    <br><br>
+    </table>
+    
+    {% if map_html %}
+    <h2>🗺️ Mapa mieszkań</h2>
+    {{ map_html|safe }}
+    {% endif %}
 
-    Minimalna liczba pokoi: 
-    <input type="number" name="min_rooms" min="1" step="1"
-    value="{{ filters.get('min_rooms','') }}">
-    <br><br>
+    {% if charts %}
+    <h2>📈 Statystyki</h2>
+    
+    <div class="chart">
+        <h3>Rozkład cen</h3>
+        <img src="data:image/png;base64,{{ charts.price_hist }}" alt="Histogram cen">
+    </div>
+    
+    <div class="chart">
+        <h3>Metraż vs Cena</h3>
+        <img src="data:image/png;base64,{{ charts.scatter }}" alt="Scatter plot">
+    </div>
+    
+    <div class="chart">
+        <h3>Liczba pokoi</h3>
+        <img src="data:image/png;base64,{{ charts.rooms_bar }}" alt="Bar chart pokoi">
+    </div>
+    {% endif %}
 
+    {% else %}
+    <p style="color: #7f8c8d; font-style: italic;">Użyj wyszukiwania lub filtrów, aby zobaczyć wyniki.</p>
+    {% endif %}
+</div>
 
-    Metraż (m²): 
-    Od: <input type="number" name="min_square"
-    value="{{ filters.get('min_square',50) }}">
-
-    Do: <input type="number" name="max_square"
-    value="{{ filters.get('max_square',100) }}">
-    <br><br>
-
-
-    Cena:
-    Od: <input type="number" name="min_price"
-    value="{{ filters.get('min_price',100000) }}">
-
-    Do: <input type="number" name="max_price"
-    value="{{ filters.get('max_price',500000) }}">
-    <br><br>
-
-    Minimalne piętro:
-    <input type="number" name="min_floor"
-    value="{{ filters.get('min_floor','') }}">
-    <br><br>
-
-    Maksymalna liczba pięter w budynku:
-    <input type="number" name="max_floor_count"
-    value="{{ filters.get('max_floor_count','') }}">
-    <br><br>
-
-    Przedszkole w pobliżu: 
-    <select name="kindergarten">
-        <option value="" {% if filters.get('kindergarten')=='' %}selected{% endif %}>
-            Dowolne
-        </option>
-
-        <option value="yes" {% if filters.get('kindergarten')=='yes' %}selected{% endif %}>
-            Tak
-        </option>
-    </select>
-    <br><br>
-
-    Szkoła w pobliżu: 
-    <select name="school">
-        <option value="" {% if filters.get('school')=='' %}selected{% endif %}>
-            Dowolne
-        </option>
-
-        <option value="yes" {% if filters.get('school')=='yes' %}selected{% endif %}>
-            Tak
-        </option>
-    </select>
-    <br><br>
-
-    Balkon: 
-    <select name="balcony">
-        <option value="" {% if filters.get('balcony')=='' %}selected{% endif %}>Dowolne</option>
-        <option value="yes" {% if filters.get('balcony')=='yes' %}selected{% endif %}>Tak</option>
-    </select><br><br>
-
-    Winda: 
-    <select name="elevator">
-        <option value="" {% if filters.get('elevator')=='' %}selected{% endif %}>Dowolne</option>
-        <option value="yes" {% if filters.get('elevator')=='yes' %}selected{% endif %}>Tak</option>
-    </select><br><br>
-
-    Parking: 
-    <select name="parking">
-        <option value="" {% if filters.get('parking')=='' %}selected{% endif %}>Dowolne</option>
-        <option value="yes" {% if filters.get('parking')=='yes' %}selected{% endif %}>Tak</option>
-    </select><br><br>
-
-    Sortuj według: 
-    <select name="sort_by">
-        <option value="" {% if sort_by=='' %}selected{% endif %}>Brak</option>
-        <option value="rooms" {% if sort_by=='rooms' %}selected{% endif %}>Pokoje</option>
-        <option value="squareMeters" {% if sort_by=='squareMeters' %}selected{% endif %}>Metraż (m²)</option>
-        <option value="floor" {% if sort_by=='floor' %}selected{% endif %}>Piętro</option>
-        <option value="floorCount" {% if sort_by=='floorCount' %}selected{% endif %}>Liczba pięter</option>
-        <option value="price" {% if sort_by=='price' %}selected{% endif %}>Cena</option>
-        <option value="kindergartenDistance" {% if sort_by=='kindergartenDistance' %}selected{% endif %}>Przedszkole (km)</option>
-        <option value="schoolDistance" {% if sort_by=='schoolDistance' %}selected{% endif %}>Szkoła (km)</option>
-    </select>
-    <br><br>
-
-    <input type="submit" value="Szukaj">
-</form>
-
-<h2>Wyniki:</h2>
-<table>
-    <tr>
-        <th>Miasto</th>
-        <th>Pokoje</th>
-        <th>Metraż (m²)</th>
-        <th>Piętro</th>
-        <th>Liczba pięter</th>
-        <th>Cena</th>
-        <th>Przedszkole (km)</th>
-        <th>Szkoła (km)</th>
-        <th>Balkon</th>
-        <th>Winda</th>
-        <th>Parking</th>
-    </tr>
-    {% for row in results %}
-    <tr>
-        <td>{{ city_map.get(row["city"], row["city"]) }}</td>
-        <td>{{ row["rooms"]|int }}</td>
-        <td>{{ "{:.2f}".format(row["squareMeters"]).replace('.',',') }}</td>
-        <td>{{ row["floor"]|int }}</td>
-        <td>{{ row["floorCount"]|int }}</td>
-        <td>{{ "{:,.0f}".format(row["price"]).replace(',', ' ') }} zł</td>
-        <td>{{ "{:.2f}".format(row["kindergartenDistance"]).replace('.',',') }} km</td>
-        <td>{{ "{:.2f}".format(row["schoolDistance"]).replace('.',',') }} km</td>
-        <td>{{ 'Tak' if row["hasBalcony"]=='yes' else 'Nie' }}</td>
-        <td>{{ 'Tak' if row["hasElevator"]=='yes' else 'Nie' }}</td>
-        <td>{{ 'Tak' if row["hasParkingSpace"]=='yes' else 'Nie' }}</td>
-    </tr>
-    {% endfor %}
-</table>
 </body>
 </html>
