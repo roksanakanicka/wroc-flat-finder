@@ -105,18 +105,6 @@
     <h1>🏠 Wyszukiwarka mieszkań na sprzedaż - Wrocław</h1>
 
     <div class="form-section">
-        <h2>Wyszukiwanie po słowach kluczowych (TF-IDF)</h2>
-        <form method="POST">
-            <div class="form-row">
-                <label>Słowa kluczowe:</label>
-                <input type="text" name="search" placeholder="np. tanie balkon parking" 
-                       value="{{ request.form.get('search', '') }}" style="width: 300px;">
-                <input type="submit" value="Szukaj">
-            </div>
-        </form>
-    </div>
-
-    <div class="form-section">
         <h2>Filtry mieszkań</h2>
         <form method="POST">
             <div class="form-row">
@@ -197,6 +185,29 @@
             </div>
             
             <input type="submit" value="Zastosuj filtry">
+        </form>
+    </div>
+
+    <div class="form-section" id="search-section">
+        <h2>Wyszukiwanie po słowach kluczowych (TF-IDF)</h2>
+        <form method="POST" id="search-form">
+            <div class="form-row">
+                <label>Słowa kluczowe:</label>
+                <input type="text" name="search" placeholder="np. tanie balkon parking" 
+                       value="{{ request.form.get('search', '') }}" style="width: 300px;">
+                <input type="submit" value="Szukaj">
+            </div>
+            {% if search_query %}
+            <div class="form-row">
+                <label>Sortuj wyniki po podobieństwie:</label>
+                <select name="similarity_sort" id="similarity-select">
+                    <option value="">Domyślnie (TF-IDF)</option>
+                    <option value="cosine" {% if similarity_sort == 'cosine' %}selected{% endif %}>Cosine</option>
+                    <option value="jaccard" {% if similarity_sort == 'jaccard' %}selected{% endif %}>Jaccard</option>
+                    <option value="dice" {% if similarity_sort == 'dice' %}selected{% endif %}>Dice</option>
+                </select>
+            </div>
+            {% endif %}
         </form>
     </div>
 
@@ -285,15 +296,6 @@
     {% if results %}
     <h2>Wyniki wyszukiwania ({{ results|length }} mieszkań)</h2>
 
-    {% if similarities %}
-    <div class="similarity-box">
-        <h3>📏 Miary podobieństwa dla top 10 wyników</h3>
-        <p><strong>Średnia Cosine:</strong> {{ "%.3f"|format(similarities|map(attribute='cosine')|sum / similarities|length) }}</p>
-        <p><strong>Średnia Jaccard:</strong> {{ "%.3f"|format(similarities|map(attribute='jaccard')|sum / similarities|length) }}</p>
-        <p><strong>Średnia Dice:</strong> {{ "%.3f"|format(similarities|map(attribute='dice')|sum / similarities|length) }}</p>
-    </div>
-    {% endif %}
-
     <table>
         <tr>
             <th>Nr</th>
@@ -307,6 +309,11 @@
             <th>Balkon</th>
             <th>Winda</th>
             <th>Parking</th>
+            {% if search_query %}
+            <th>Cosine</th>
+            <th>Jaccard</th>
+            <th>Dice</th>
+            {% endif %}
         </tr>
         {% for i, row in enumerate(results[:50]) %}
         <tr>
@@ -323,6 +330,12 @@
             <td>{{ 'Tak' if row["hasBalcony"]=='yes' else 'Nie' }}</td>
             <td>{{ 'Tak' if row["hasElevator"]=='yes' else 'Nie' }}</td>
             <td>{{ 'Tak' if row["hasParkingSpace"]=='yes' else 'Nie' }}</td>
+            
+            {% if search_query %}
+            <td>{{ "%.3f"|format(row.cosine_sim|default(0)) }}</td>
+            <td>{{ "%.3f"|format(row.jaccard_sim|default(0)) }}</td>
+            <td>{{ "%.3f"|format(row.dice_sim|default(0)) }}</td>
+            {% endif %}
         </tr>
         {% endfor %}
     </table>
@@ -355,6 +368,29 @@
     <p style="color: #7f8c8d; font-style: italic;">Użyj wyszukiwania lub filtrów, aby zobaczyć wyniki.</p>
     {% endif %}
 </div>
+
+<script>
+// zapamiętywanie pozycji scrolla przed submitem
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.getElementById('search-form');
+    const similaritySelect = document.getElementById('similarity-select');
+    
+    // auto-submit przy zmianie sortowania
+    if (similaritySelect) {
+        similaritySelect.addEventListener('change', function() {
+            sessionStorage.setItem('scrollPos', window.scrollY);
+            searchForm.submit();
+        });
+    }
+    
+    // przywrócenie pozycji scrolla po załadowaniu
+    const savedPos = sessionStorage.getItem('scrollPos');
+    if (savedPos) {
+        window.scrollTo(0, parseInt(savedPos));
+        sessionStorage.removeItem('scrollPos');
+    }
+});
+</script>
 
 </body>
 </html>

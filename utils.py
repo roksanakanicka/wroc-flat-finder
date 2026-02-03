@@ -189,7 +189,18 @@ def calculate_similarities(query, tfidf_docs):
     
     return similarities
 
-# ========== WIZUALIZACJA ==========
+def calculate_similarity_for_doc(query, doc_tfidf, doc_tokens_set):
+    """oblicza miary podobieństwa dla pojedynczego dokumentu"""
+    query_tokens = set(lemmatize_text(query).split())
+    query_tfidf = {token: 1.0 for token in query_tokens}
+    
+    return {
+        'cosine': cosine_similarity(query_tfidf, doc_tfidf),
+        'jaccard': jaccard_similarity(query_tokens, doc_tokens_set),
+        'dice': dice_similarity(query_tokens, doc_tokens_set)
+    }
+
+# ========== WIZUALIZACJE ==========
 
 def create_charts(results):
     """generowanie wykresów"""

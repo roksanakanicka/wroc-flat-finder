@@ -40,6 +40,7 @@ def index():
     if request.method == 'POST':
         if search_query:
             # wyszukiwanie TF-IDF
+            from utils import calculate_similarity_for_doc
             top_indices = search_tfidf(search_query, documents, tfidf_docs, top_n=50)
             
             if top_indices:
@@ -53,11 +54,28 @@ def index():
                 conn.close()
                 
                 id_to_row = {row['id']: dict(row) for row in rows}
-                results = [id_to_row[_id] for _id in filtered_ids if _id in id_to_row]
+                results = []
                 
-                top_10_indices = top_indices[:10]
-                similarities = calculate_similarities(search_query, 
-                                                   [tfidf_docs[i] for i in top_10_indices])
+                # obliczenie miary dla każdego wyniku
+                for idx, _id in enumerate(filtered_ids):
+                    if _id in id_to_row:
+                        result = id_to_row[_id]
+                        orig_idx = top_indices[idx]
+                        doc_tokens_set = set(tokenized_docs[orig_idx])
+                        sims = calculate_similarity_for_doc(search_query, tfidf_docs[orig_idx], doc_tokens_set)
+                        result['cosine_sim'] = sims['cosine']
+                        result['jaccard_sim'] = sims['jaccard']
+                        result['dice_sim'] = sims['dice']
+                        results.append(result)
+                
+                # sortowanie po miarach podobieństwa
+                similarity_sort = request.form.get('similarity_sort')
+                if similarity_sort == 'cosine':
+                    results.sort(key=lambda x: x.get('cosine_sim', 0), reverse=True)
+                elif similarity_sort == 'jaccard':
+                    results.sort(key=lambda x: x.get('jaccard_sim', 0), reverse=True)
+                elif similarity_sort == 'dice':
+                    results.sort(key=lambda x: x.get('dice_sim', 0), reverse=True)
             else:
                 results = []
         else:
@@ -74,16 +92,20 @@ def index():
     if request.form.get('show_wiki'):
         wiki_data = get_city_description()
     
+    similarity_sort = request.form.get('similarity_sort')
     return render_template('index.html',
-                          results=results,
-                          filters=filters,
-                          sort_by=sort_by,
-                          map_html=map_html,
-                          charts=charts,
-                          similarities=similarities,
-                          wiki_data=wiki_data,
-                          district_stats=district_stats,
-                          enumerate=enumerate)
-
+                           results=results,
+                           filters=filters,
+                           sort_by=sort_by,
+                           similarity_sort=similarity_sort,
+                           map_html=map_html,
+                           charts=charts,
+                           wiki_data=wiki_data,
+                           district_stats=district_stats,
+                           search_query=search_query,
+                           enumerate=enumerate)
+                           
+                            
+                           
 if __name__ == '__main__':
     app.run(debug=True)
