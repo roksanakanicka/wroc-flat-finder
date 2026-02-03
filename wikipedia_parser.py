@@ -35,8 +35,8 @@ def parse_wroclaw_wiki():
                 clean = re.sub(r'\[.*?\]', '', text)
                 texts.append(clean)
         
-        if len(texts) >= 3:
-            data['pl']['text'] = ' '.join(texts[:3])
+        if len(texts) >= 2:
+            data['pl']['text'] = ' '.join(texts[:2])
         
         # regex dla liczb
         full_text = soup.get_text()
@@ -67,8 +67,8 @@ def parse_wroclaw_wiki():
                 clean = re.sub(r'\[.*?\]', '', text)
                 texts.append(text)
         
-        if len(texts) >= 3:
-            data['en']['text'] = ' '.join(texts[:3])
+        if len(texts) >= 2:
+            data['en']['text'] = ' '.join(texts[:2])
     except:
         pass
     

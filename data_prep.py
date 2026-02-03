@@ -27,8 +27,6 @@ def price_category(price):
         return ["tanie"]
     elif price < 700000:
         return ["średnia cena"]
-    elif price < 1000000:
-        return ["drogie"]
     else:
         return ["luksusowe"]
 
