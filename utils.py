@@ -3,24 +3,23 @@ import sqlite3
 import io
 import base64
 import folium
+from folium.plugins import MarkerCluster
 import matplotlib
 from collections import Counter
 from functools import lru_cache
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from data_prep import lemmatize_text
+from lemmatization import lemmatize_text
 
 # ========== BAZA DANYCH I LOGIKA ==========
 
 def get_db_connection():
-    """połączenie z bazą"""
     conn = sqlite3.connect('apartments_sale.db')
     conn.row_factory = sqlite3.Row
     return conn
 
 @lru_cache(maxsize=1)
 def load_documents_cached():
-    """ładowanie dokumentów do pamięci (Cache)"""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('SELECT id, document FROM apartments')
@@ -32,7 +31,7 @@ def load_documents_cached():
     return ids, documents
 
 def analyze_districts():
-    """statystyki ogólne rynku"""
+    """statystyki ogólne rynku z bazy danych"""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('SELECT price, squareMeters FROM apartments')
@@ -58,8 +57,8 @@ def analyze_districts():
 def get_filtered_apartments(min_rooms=None, min_square=None, max_square=None,
                             min_price=None, max_price=None, min_build_year=None, 
                             max_centre_distance=None, balcony=None, elevator=None, 
-                            parking=None, min_floor=None, max_floor_count=None, sort_by=None):
-    """filtrowanie SQL"""
+                            parking=None, min_floor=None, max_floor_count=None, 
+                            district=None, sort_by=None):
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -102,7 +101,12 @@ def get_filtered_apartments(min_rooms=None, min_square=None, max_square=None,
     if parking == 'yes':
         query += ' AND hasParkingSpace = "yes"'
     
+    if district is not None and district != '':
+        query += ' AND district_name = ?'
+        params.append(district)
+    
     valid_sort = ['rooms', 'squareMeters', 'floor', 'floorCount', 'price']
+    
     if sort_by in valid_sort:
         query += f' ORDER BY {sort_by} ASC'
     
@@ -115,11 +119,38 @@ def get_filtered_apartments(min_rooms=None, min_square=None, max_square=None,
 
 # ========== TF-IDF I PODOBIEŃSTWA ==========
 
+def preprocess_query(query):
+    """Lematyzuje, potem łączy 'blisko/bardzo blisko/obok' z następnym słowem"""
+    # lematyzacja
+    lemmatized = lemmatize_text(query)
+    
+    # sklejanie
+    words = lemmatized.split()
+    result = []
+    i = 0
+    
+    while i < len(words):
+        # bardzo blisko X
+        if i < len(words) - 2 and words[i] == "bardzo" and words[i+1] == "blisko":
+            result.append(f"bardzo_blisko_{words[i+2]}")
+            i += 3
+        # blisko X
+        elif i < len(words) - 1 and words[i] == "blisko":
+            result.append(f"blisko_{words[i+1]}")
+            i += 2
+        # obok X
+        elif i < len(words) - 1 and words[i] == "obok":
+            result.append(f"blisko_{words[i+1]}")
+            i += 2
+        else:
+            result.append(words[i])
+            i += 1
+    
+    return " ".join(result)
 
 def compute_tfidf(documents):
-    """oblicza TF-IDF dla dokumentów"""
     N = len(documents)
-    tokenized_docs = [lemmatize_text(doc).split() for doc in documents]
+    tokenized_docs = [doc.split() for doc in documents]
     
     df_counts = Counter()
     for tokens in tokenized_docs:
@@ -132,15 +163,15 @@ def compute_tfidf(documents):
         max_tf = max(tf_counts.values()) if tf_counts else 1
         
         tfidf = {
-            token: (tf / max_tf) * math.log(N / df_counts[token]) 
+            token: (tf / max_tf) * math.log10(N / df_counts[token]) 
             for token, tf in tf_counts.items()
         }
         tfidf_docs.append(tfidf)
     
-    return tfidf_docs, tokenized_docs
+    return tfidf_docs, tokenized_docs, df_counts, N
 
 def search_tfidf(query, documents, tfidf_docs, top_n=25):
-    """wyszukuje dokumenty sumując wagi TF-IDF"""
+    query = preprocess_query(query)
     query_tokens = lemmatize_text(query).split()
     scores = []
     
@@ -157,64 +188,66 @@ def cosine_similarity(vec1, vec2):
     dot_product = sum(vec1.get(t, 0) * vec2.get(t, 0) for t in all_tokens)
     mag1 = math.sqrt(sum(v**2 for v in vec1.values()))
     mag2 = math.sqrt(sum(v**2 for v in vec2.values()))
-    if mag1 == 0 or mag2 == 0: return 0
+    if mag1 == 0 or mag2 == 0: 
+        return 0
     return dot_product / (mag1 * mag2)
 
-def jaccard_similarity(set1, set2):
-    intersection = len(set1 & set2)
-    union = len(set1 | set2)
-    return intersection / union if union > 0 else 0
-
-def dice_similarity(set1, set2):
-    intersection = len(set1 & set2)
-    total = len(set1) + len(set2)
-    return (2 * intersection) / total if total > 0 else 0
-
-def calculate_similarities(query, tfidf_docs):
-    """miary podobieństwa dla topowych wyników"""
-    query_tokens = set(lemmatize_text(query).split())
-    query_tfidf = {token: 1.0 for token in query_tokens}
+def jaccard_similarity(vec1, vec2):
+    all_tokens = set(vec1.keys()) | set(vec2.keys())
     
-    similarities = []
-    for idx, doc_tfidf in enumerate(tfidf_docs):
-        doc_tokens = set(doc_tfidf.keys())
-        
-        sim_data = {
-            'idx': idx,
-            'cosine': cosine_similarity(query_tfidf, doc_tfidf),
-            'jaccard': jaccard_similarity(query_tokens, doc_tokens),
-            'dice': dice_similarity(query_tokens, doc_tokens)
-        }
-        similarities.append(sim_data)
+    numerator = sum(vec1.get(t, 0) * vec2.get(t, 0) for t in all_tokens)
+    sum_sq1 = sum(v**2 for v in vec1.values())
+    sum_sq2 = sum(v**2 for v in vec2.values())
     
-    return similarities
+    denominator = sum_sq1 + sum_sq2 - numerator
+    return numerator / denominator if denominator > 0 else 0
 
-def calculate_similarity_for_doc(query, doc_tfidf, doc_tokens_set):
-    """oblicza miary podobieństwa dla pojedynczego dokumentu"""
-    query_tokens = set(lemmatize_text(query).split())
-    query_tfidf = {token: 1.0 for token in query_tokens}
+def dice_similarity(vec1, vec2):
+    all_tokens = set(vec1.keys()) | set(vec2.keys())
+    
+    numerator = 2 * sum(vec1.get(t, 0) * vec2.get(t, 0) for t in all_tokens)
+    sum_sq1 = sum(v**2 for v in vec1.values())
+    sum_sq2 = sum(v**2 for v in vec2.values())
+    
+    denominator = sum_sq1 * sum_sq2
+    return numerator / denominator if denominator > 0 else 0
+
+def calculate_similarity_for_doc(query, doc_tfidf, doc_tokens_set, df_counts, N):
+    # obliczenie tf-idf dla query takie samo jak dla dokumentów
+    processed_query = preprocess_query(query) 
+    query_tokens = lemmatize_text(processed_query).split()
+    
+    tf_counts = Counter(query_tokens)
+    max_tf = max(tf_counts.values()) if tf_counts else 1
+    
+    query_tfidf = {
+        token: (tf / max_tf) * math.log10(N / df_counts.get(token, N))
+        for token, tf in tf_counts.items()
+    }
     
     return {
         'cosine': cosine_similarity(query_tfidf, doc_tfidf),
-        'jaccard': jaccard_similarity(query_tokens, doc_tokens_set),
-        'dice': dice_similarity(query_tokens, doc_tokens_set)
+        'jaccard': jaccard_similarity(query_tfidf, doc_tfidf),
+        'dice': dice_similarity(query_tfidf, doc_tfidf)
     }
 
 # ========== WIZUALIZACJE ==========
 
 def create_charts(results):
-    """generowanie wykresów"""
     charts = {}
     if not results:
         return charts
     
+    prices = [r['price'] for r in results if r.get('price') is not None]
+    if not prices:
+        return charts
+
     # histogram cen
     plt.figure(figsize=(10, 6))
     prices = [r['price'] for r in results]
     plt.hist(prices, bins=15, color='steelblue', edgecolor='black')
     plt.xlabel('Cena (zł)')
     plt.ylabel('Liczba ofert')
-    plt.title('Rozkład cen')
     ax = plt.gca()
     ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}'.replace(',', ' ')))
     plt.xticks(rotation=45)
@@ -232,7 +265,6 @@ def create_charts(results):
     plt.scatter(squares, prices, alpha=0.6, color='coral', s=50)
     plt.xlabel('Metraż (m²)')
     plt.ylabel('Cena (zł)')
-    plt.title('Zależność ceny od metrażu')
     plt.grid(alpha=0.3)
     ax = plt.gca()
     ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}'.replace(',', ' ')))
@@ -254,7 +286,6 @@ def create_charts(results):
             color='lightgreen', edgecolor='black', width=0.6)
     plt.xlabel('Liczba pokoi')
     plt.ylabel('Liczba ofert')
-    plt.title('Oferty według liczby pokoi')
     plt.tight_layout()
     
     buf = io.BytesIO()
@@ -266,12 +297,14 @@ def create_charts(results):
     return charts
 
 def create_map(results):
-    """mapa Folium"""
+    # mapa Folium
     if not results:
         return None
     
     locs = [(r['latitude'], r['longitude'], r['price'], r['rooms'], i+1) 
-            for i, r in enumerate(results) if r['latitude'] and r['longitude']]
+            for i, r in enumerate(results) 
+            if r.get('latitude') is not None and r.get('longitude') is not None 
+            and r.get('price') is not None and r.get('rooms') is not None]
     
     if not locs:
         return None
@@ -281,9 +314,25 @@ def create_map(results):
     
     m = folium.Map(location=[lat_avg, lon_avg], zoom_start=12)
     
+    # grupowanie z MarkerCluster
+    marker_cluster = MarkerCluster().add_to(m)
+    
     for lat, lon, price, rooms, num in locs:
         popup_text = f"Nr: {num}<br>Cena: {int(price):,} zł<br>Pokoje: {int(rooms)}".replace(',', ' ')
         popup = folium.Popup(popup_text, max_width=300, min_width=150)
-        folium.Marker([lat, lon], popup=popup).add_to(m)
+        folium.Marker([lat, lon], popup=popup).add_to(marker_cluster)
     
     return m._repr_html_()
+
+def get_all_districts():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT DISTINCT district_name 
+        FROM apartments 
+        WHERE district_name IS NOT NULL 
+        ORDER BY district_name
+    """)
+    districts = [row['district_name'] for row in cursor.fetchall()]
+    conn.close()
+    return districts

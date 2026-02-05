@@ -10,7 +10,7 @@
             background-color: #f5f5f5;
         }
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
             background-color: white;
             padding: 20px;
@@ -58,23 +58,6 @@
         input[type="submit"]:hover {
             background-color: #2980b9;
         }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #bdc3c7;
-            padding: 10px;
-            text-align: center;
-        }
-        th {
-            background-color: #3498db;
-            color: white;
-        }
-        tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
         .chart {
             margin: 20px 0;
             text-align: center;
@@ -91,18 +74,179 @@
             padding: 15px;
             margin: 20px 0;
         }
-        .similarity-box {
-            background-color: #e8f8f5;
-            border-left: 4px solid #1abc9c;
+        .badge-yes {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            background: #d4edda;
+            color: #155724;
+            font-weight: 500;
+        }
+        .badge-no {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            background: #f8d7da;
+            color: #721c24;
+            font-weight: 500;
+        }
+        
+        /* Klasy dla kart mieszkań - NOWY KOMPAKTOWY DESIGN */
+        .apartment-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+        .apartment-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+        .apartment-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 15px;
+        }
+        .apartment-price {
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: -0.5px;
+        }
+        .similarity-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 8px;
+            border-radius: 8px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* Nowy grid layout dla zawartości */
+        .apartment-content {
+            padding: 15px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             padding: 10px;
-            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .info-box-title {
+            font-size: 10px;
+            color: #667eea;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        
+        .info-box-content {
+            font-size: 11px;
+            color: #2c3e50;
+            line-height: 1.5;
+        }
+        
+        .info-box-highlight {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 2px;
+        }
+        
+        .amenities-row {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        
+        .distance-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .distance-item {
+            background: #f8f9fa;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            text-align: center;
+        }
+        
+        .distance-label {
+            color: #6c757d;
+            margin-bottom: 2px;
+        }
+        
+        .distance-value {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .location-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #e0e0e0, transparent);
+            margin: 12px 0;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🏠 Wyszukiwarka mieszkań na sprzedaż - Wrocław</h1>
+    <h1>🏠 Wyszukiwarka mieszkań na sprzedaż - Wrocław (parsowane z Wikipedii)</h1>
+
+    <!-- Informacje o Wrocławiu z Wikipedii -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
+        <div class="wiki-box">
+            <h3 style="margin-top: 0; color: #e67e22;">📚 O Wrocławiu</h3>
+            <p style="line-height: 1.6;">{{ city_stats.pl }}</p>
+            <div style="margin-top: 15px;">
+                <strong>👥 Populacja:</strong> {{ "{:,}".format(city_stats.population|int).replace(',', ' ') }}<br>
+                <strong>📏 Powierzchnia:</strong> {{ city_stats.area }} km²
+            </div>
+        </div>
+        
+        <div style="background-color: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px; border-radius: 5px;">
+            <h3 style="margin-top: 0; color: #2e7d32;">📊 Statystyki rynku</h3>
+            <div style="font-size: 13px; line-height: 1.8; margin-bottom: 15px;">
+                <strong>📈 Ofert:</strong> {{ "{:,}".format(district_stats.total_count).replace(',', ' ') }}<br>
+                <strong>💰 Śr. cena:</strong> {{ "{:,.0f}".format(district_stats.avg_price).replace(',', ' ') }} zł<br>
+                <strong>📏 Śr. metraż:</strong> {{ "%.1f"|format(district_stats.avg_sqm) }} m²<br>
+                <strong>💵 Cena/m²:</strong> {{ "{:,.0f}".format(district_stats.avg_price_per_sqm).replace(',', ' ') }} zł
+            </div>
+            
+            <h4 style="margin: 10px 0 8px 0; color: #2e7d32; font-size: 14px;">✨ Ciekawostki</h4>
+            <ul style="margin: 0; padding-left: 18px; font-size: 11px; line-height: 1.6;">
+                {% for fact in city_stats.interesting_facts_pl %}
+                <li style="margin-bottom: 4px;">{{ fact }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
 
     <div class="form-section">
         <h2>Filtry mieszkań</h2>
@@ -173,6 +317,16 @@
             </div>
             
             <div class="form-row">
+                <label>Dzielnica/Osiedle:</label>
+                <select name="district">
+                    <option value="">Wszystkie</option>
+                    {% for district in all_districts %}
+                    <option value="{{ district }}" {% if filters.get('district')==district %}selected{% endif %}>{{ district }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-row">
                 <label>Sortuj według:</label>
                 <select name="sort_by">
                     <option value="">Brak</option>
@@ -194,14 +348,15 @@
             <div class="form-row">
                 <label>Słowa kluczowe:</label>
                 <input type="text" name="search" placeholder="np. tanie balkon parking" 
-                       value="{{ request.form.get('search', '') }}" style="width: 300px;">
+                    value="{{ search_query }}" style="width: 300px;">
                 <input type="submit" value="Szukaj">
             </div>
             {% if search_query %}
+            <input type="hidden" name="search" value="{{ search_query }}">
             <div class="form-row">
                 <label>Sortuj wyniki po podobieństwie:</label>
                 <select name="similarity_sort" id="similarity-select">
-                    <option value="">Domyślnie (TF-IDF)</option>
+                    <option value="" {% if not similarity_sort %}selected{% endif %}>Domyślnie (TF-IDF)</option>
                     <option value="cosine" {% if similarity_sort == 'cosine' %}selected{% endif %}>Cosine</option>
                     <option value="jaccard" {% if similarity_sort == 'jaccard' %}selected{% endif %}>Jaccard</option>
                     <option value="dice" {% if similarity_sort == 'dice' %}selected{% endif %}>Dice</option>
@@ -211,183 +366,241 @@
         </form>
     </div>
 
-    <div class="form-section">
-        <form method="POST">
-            <input type="hidden" name="show_wiki" value="1">
-            <input type="submit" value="Pokaż informacje o Wrocławiu (Wikipedia PL/EN)">
-        </form>
-    </div>
+{% if results %}
+<h2>Wyniki wyszukiwania ({{ results|length }} mieszkań)</h2>
 
-{% if wiki_data %}
-    <div class="wiki-box">
-        <h3>📍 Informacje o Wrocławiu</h3>
-        
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
-            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px;">
-                <div style="font-size: 24px; font-weight: bold;">{{ "{:,}".format(wiki_data.population|int).replace(',', ' ') }}</div>
-                <div style="font-size: 12px; margin-top: 5px;">Mieszkańców</div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+    {% for result in results %}
+    <div class="apartment-card">
+    
+        <!-- HEADER Z CENĄ -->
+        <div class="apartment-header">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 16px; font-weight: bold; opacity: 0.9;">#{{ loop.index }}</span>
+                <span class="apartment-price">{{ "{:,}".format(result["price"]|int).replace(',', ' ') }} zł</span>
             </div>
-            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border-radius: 8px;">
-                <div style="font-size: 24px; font-weight: bold;">{{ wiki_data.area }}</div>
-                <div style="font-size: 12px; margin-top: 5px;">km²</div>
-            </div>
-            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border-radius: 8px;">
-                <div style="font-size: 24px; font-weight: bold;">{{ "{:,}".format(district_stats.avg_price|int).replace(',', ' ') }}</div>
-                <div style="font-size: 12px; margin-top: 5px;">Średnia cena (zł)</div>
-            </div>
-            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border-radius: 8px;">
-                <div style="font-size: 24px; font-weight: bold;">{{ "{:,}".format(district_stats.total_count|int).replace(',', ' ') }}</div>
-                <div style="font-size: 12px; margin-top: 5px;">Mieszkań w bazie</div>
-            </div>
-        </div>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-            <div style="padding: 15px; background-color: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 5px;">
-                <p style="margin: 0 0 10px 0; font-weight: bold; color: #1976d2;">📝 Opis (PL)</p>
-                <p style="text-align: justify; line-height: 1.7; margin: 0; font-size: 14px;">{{ wiki_data.pl }}</p>
-            </div>
-            <div style="padding: 15px; background-color: #e8f5e9; border-left: 4px solid #4caf50; border-radius: 5px;">
-                <p style="margin: 0 0 10px 0; font-weight: bold; color: #388e3c;">📝 Description (EN)</p>
-                <p style="text-align: justify; line-height: 1.7; margin: 0; font-size: 14px;">{{ wiki_data.en }}</p>
-            </div>
-        </div>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div style="padding: 15px; background-color: #fff3e0; border-left: 4px solid #ff9800; border-radius: 5px;">
-                <p style="margin: 0 0 10px 0; font-weight: bold; color: #f57c00;">💡 Ciekawostki</p>
-                <ul style="margin: 5px 0 0 20px; padding: 0; font-size: 13px; line-height: 1.6;">
-                    {% for fact in wiki_data.interesting_facts_pl[:5] %}
-                    <li style="margin-bottom: 5px;">{{ fact }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            
-            <div style="padding: 15px; background-color: #fce4ec; border-left: 4px solid #e91e63; border-radius: 5px;">
-                <p style="margin: 0 0 10px 0; font-weight: bold; color: #c2185b;">🎯 Główne atrakcje</p>
-                <ul style="margin: 5px 0 0 20px; padding: 0; font-size: 13px; line-height: 1.6;">
-                    {% for attraction in wiki_data.attractions_pl[:5] %}
-                    <li style="margin-bottom: 5px;">{{ attraction }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-        
-        <div style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 5px;">
-            <p style="margin: 0 0 10px 0; font-weight: bold; color: #424242;">📊 Statystyki mieszkań (z całej bazy - {{ district_stats.total_count }} mieszkań)</p>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                <div>
-                    <span style="color: #666;">Średnia cena:</span>
-                    <strong style="color: #1976d2;">{{ "{:,}".format(district_stats.avg_price|int).replace(',', ' ') }} zł</strong>
-                </div>
-                <div>
-                    <span style="color: #666;">Średni metraż:</span>
-                    <strong style="color: #388e3c;">{{ "%.1f"|format(district_stats.avg_sqm) }} m²</strong>
-                </div>
-                <div>
-                    <span style="color: #666;">Średnia cena za m²:</span>
-                    <strong style="color: #f57c00;">{{ "{:,}".format(district_stats.avg_price_per_sqm|int).replace(',', ' ') }} zł/m²</strong>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-
-    {% if results %}
-    <h2>Wyniki wyszukiwania ({{ results|length }} mieszkań)</h2>
-
-    <table>
-        <tr>
-            <th>Nr</th>
-            <th>Pokoje</th>
-            <th>Metraż (m²)</th>
-            <th>Piętro</th>
-            <th>Pięter</th>
-            <th>Cena (zł)</th>
-            <th>Rok budowy</th>
-            <th>Centrum (km)</th>
-            <th>Balkon</th>
-            <th>Winda</th>
-            <th>Parking</th>
-            {% if search_query %}
-            <th>Cosine</th>
-            <th>Jaccard</th>
-            <th>Dice</th>
-            {% endif %}
-        </tr>
-        {% for i, row in enumerate(results[:50]) %}
-        <tr>
-            <td>{{ i + 1 }}</td>
-            <td>{{ row["rooms"]|int }}</td>
-            <td>{{ "%.2f"|format(row["squareMeters"]) }}</td>
-            <td>{{ row["floor"]|int }}</td>
-            <td>{{ row["floorCount"]|int }}</td>
-            <td>{{ "{:,}".format(row["price"]|int).replace(',', ' ') }}</td>
-            
-            <td>{{ row["buildYear"]|int }}</td>
-            <td>{{ "%.2f"|format(row["centreDistance"]) }}</td>
-            
-            <td>{{ 'Tak' if row["hasBalcony"]=='yes' else 'Nie' }}</td>
-            <td>{{ 'Tak' if row["hasElevator"]=='yes' else 'Nie' }}</td>
-            <td>{{ 'Tak' if row["hasParkingSpace"]=='yes' else 'Nie' }}</td>
             
             {% if search_query %}
-            <td>{{ "%.3f"|format(row.cosine_sim|default(0)) }}</td>
-            <td>{{ "%.3f"|format(row.jaccard_sim|default(0)) }}</td>
-            <td>{{ "%.3f"|format(row.dice_sim|default(0)) }}</td>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
+                <div class="similarity-badge">
+                    <div style="font-size: 9px; opacity: 0.8; margin-bottom: 2px;">Cosine</div>
+                    <div style="font-size: 14px; font-weight: bold;">{{ "%.3f"|format(result.cosine_sim|default(0)) }}</div>
+                </div>
+                <div class="similarity-badge">
+                    <div style="font-size: 9px; opacity: 0.8; margin-bottom: 2px;">Jaccard</div>
+                    <div style="font-size: 14px; font-weight: bold;">{{ "%.3f"|format(result.jaccard_sim|default(0)) }}</div>
+                </div>
+                <div class="similarity-badge">
+                    <div style="font-size: 9px; opacity: 0.8; margin-bottom: 2px;">Dice</div>
+                    <div style="font-size: 14px; font-weight: bold;">{{ "%.3f"|format(result.dice_sim|default(0)) }}</div>
+                </div>
+            </div>
             {% endif %}
-        </tr>
-        {% endfor %}
-    </table>
-    
-    {% if map_html %}
-    <h2>🗺️ Mapa mieszkań</h2>
-    {{ map_html|safe }}
-    {% endif %}
-
-    {% if charts %}
-    <h2>📈 Statystyki</h2>
-    
-    <div class="chart">
-        <h3>Rozkład cen</h3>
-        <img src="data:image/png;base64,{{ charts.price_hist }}" alt="Histogram cen">
+        </div>
+        
+        <!-- ZAWARTOŚĆ - NOWY KOMPAKTOWY LAYOUT -->
+        <div class="apartment-content">
+            
+            <!-- LOKALIZACJA -->
+            {% if result.get("district_name") %}
+            <div class="location-badge">
+                📍 {{ result["district_name"] }}
+            </div>
+            {% endif %}
+            
+            <!-- GŁÓWNE INFO - 3 KOLUMNY -->
+            <div class="info-grid">
+                <div class="info-box">
+                    <div class="info-box-title">🏠 Pokoje & Metraż</div>
+                    <div class="info-box-content">
+                        <div class="info-box-highlight">{{ result["rooms"]|int }} pok.</div>
+                        <div>{{ "%.0f"|format(result["squareMeters"]) }} m²</div>
+                        <div style="font-size: 10px; color: #6c757d; margin-top: 2px;">
+                            {{ "{:,.0f}".format(result["price"] / result["squareMeters"]).replace(',', ' ') }} zł/m²
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-box">
+                    <div class="info-box-title">🏢 Piętro</div>
+                    <div class="info-box-content">
+                        <div class="info-box-highlight">{{ result["floor"]|int }}/{{ result["floorCount"]|int }}</div>
+                        <div style="font-size: 10px; color: #6c757d;">
+                            {% if result["floor"]|int == 0 %}Parter{% elif result["floor"]|int == result["floorCount"]|int %}Ostatnie{% else %}Środkowe{% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-box">
+                    <div class="info-box-title">📅 Rok budowy</div>
+                    <div class="info-box-content">
+                        <div class="info-box-highlight">{{ result["buildYear"]|int if result["buildYear"] else "?" }}</div>
+                        <div style="font-size: 10px; color: #6c757d;">
+                            {% if result["buildYear"] and result["buildYear"]|int >= 2010 %}Nowe{% elif result["buildYear"] and result["buildYear"]|int >= 1990 %}Średnie{% else %}Starsze{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SZCZEGÓŁY BUDYNKU -->
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 12px;">
+                <div style="font-size: 10px; color: #667eea; font-weight: bold; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    🏗️ Budynek
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px; color: #2c3e50;">
+                    <div>
+                        <strong>Typ:</strong> {{ {'blockOfFlats': 'Blok', 'apartmentBuilding': 'Apartamentowiec', 'tenement': 'Kamienica'}.get(result["type"], 'Brak danych') }}
+                    </div>
+                    <div>
+                        <strong>Materiał:</strong> {{ {'brick': 'Cegła', 'concreteSlab': 'Płyta'}.get(result["buildingMaterial"], 'Brak danych') }}
+                    </div>
+                    <div>
+                        <strong>Własność:</strong> {{ {'condominium': 'Własnościowe', 'cooperative': 'Spółdzielcze'}.get(result["ownership"], 'Brak danych') }}
+                    </div>
+                    <div>
+                        <strong>Stan:</strong> {{ {'premium': 'Premium', 'low': 'Do remontu'}.get(result["condition"], 'Brak danych') }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- UDOGODNIENIA -->
+            <div style="margin-bottom: 12px;">
+                <div style="font-size: 10px; color: #667eea; font-weight: bold; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    ✨ Udogodnienia
+                </div>
+                <div class="amenities-row">
+                    <span class="{% if result['hasBalcony']=='yes' %}badge-yes{% else %}badge-no{% endif %}">
+                        {% if result['hasBalcony']=='yes' %}✓{% else %}✗{% endif %} Balkon
+                    </span>
+                    <span class="{% if result['hasElevator']=='yes' %}badge-yes{% else %}badge-no{% endif %}">
+                        {% if result['hasElevator']=='yes' %}✓{% else %}✗{% endif %} Winda
+                    </span>
+                    <span class="{% if result['hasParkingSpace']=='yes' %}badge-yes{% else %}badge-no{% endif %}">
+                        {% if result['hasParkingSpace']=='yes' %}✓{% else %}✗{% endif %} Parking
+                    </span>
+                    <span class="{% if result['hasSecurity']=='yes' %}badge-yes{% else %}badge-no{% endif %}">
+                        {% if result['hasSecurity']=='yes' %}✓{% else %}✗{% endif %} Ochrona
+                    </span>
+                    <span class="{% if result['hasStorageRoom']=='yes' %}badge-yes{% else %}badge-no{% endif %}">
+                        {% if result['hasStorageRoom']=='yes' %}✓{% else %}✗{% endif %} Piwnica
+                    </span>
+                </div>
+            </div>
+            
+            <div class="section-divider"></div>
+            
+            <!-- ODLEGŁOŚCI -->
+            <div>
+                <div style="font-size: 10px; color: #667eea; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    📏 Odległości
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold;">
+                        Centrum: {{ "%.1f"|format(result["centreDistance"]) }} km
+                    </span>
+                    <span style="background: #e9ecef; padding: 4px 8px; border-radius: 12px; font-size: 10px; color: #6c757d;">
+                        POI: {{ result["poiCount"]|int if result["poiCount"] else 0 }}
+                    </span>
+                </div>
+                
+                <div class="distance-grid">
+                    <div class="distance-item">
+                        <div class="distance-label">🏫 Szkoła</div>
+                        <div class="distance-value">{{ "%.2f"|format(result["schoolDistance"]) }} km</div>
+                    </div>
+                    <div class="distance-item">
+                        <div class="distance-label">🏥 Klinika</div>
+                        <div class="distance-value">{{ "%.2f"|format(result["clinicDistance"]) }} km</div>
+                    </div>
+                    <div class="distance-item">
+                        <div class="distance-label">🧒 Przedszkole</div>
+                        <div class="distance-value">{{ "%.2f"|format(result["kindergartenDistance"]) }} km</div>
+                    </div>
+                    <div class="distance-item">
+                        <div class="distance-label">💊 Apteka</div>
+                        <div class="distance-value">{{ "%.2f"|format(result["pharmacyDistance"]) }} km</div>
+                    </div>
+                    <div class="distance-item">
+                        <div class="distance-label">🍽️ Restauracja</div>
+                        <div class="distance-value">{{ "%.2f"|format(result["restaurantDistance"]) }} km</div>
+                    </div>
+                    <div class="distance-item">
+                        <div class="distance-label">🎓 Uczelnia</div>
+                        <div class="distance-value">{{ "%.2f"|format(result["collegeDistance"]) }} km</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- DOCUMENT -->
+            <details style="margin-top: 12px; padding: 10px; background: #f8f9fa; border-radius: 8px; border-left: 3px solid #667eea;">
+                <summary style="cursor: pointer; font-weight: bold; color: #667eea; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    📝 Document tekstowy
+                </summary>
+                <div style="margin-top: 8px; padding: 8px; background: white; border-radius: 6px; font-size: 9px; color: #666; line-height: 1.4; font-family: 'Courier New', monospace; max-height: 100px; overflow-y: auto;">
+                    {{ result["document"] }}
+                </div>
+            </details>
+        </div>
     </div>
-    
-    <div class="chart">
-        <h3>Metraż vs Cena</h3>
-        <img src="data:image/png;base64,{{ charts.scatter }}" alt="Scatter plot">
-    </div>
-    
-    <div class="chart">
-        <h3>Liczba pokoi</h3>
-        <img src="data:image/png;base64,{{ charts.rooms_bar }}" alt="Bar chart pokoi">
-    </div>
-    {% endif %}
-
-    {% else %}
-    <p style="color: #7f8c8d; font-style: italic;">Użyj wyszukiwania lub filtrów, aby zobaczyć wyniki.</p>
-    {% endif %}
+{% endfor %}
 </div>
 
+{% if map_html %}
+<h2 style="margin-top: 40px;">🗺️ Mapa mieszkań</h2>
+{{ map_html|safe }}
+{% endif %}
+
+{% if charts %}
+<h2 style="margin-top: 40px;">📈 Statystyki</h2>
+
+<div class="chart">
+    <h3>Rozkład cen</h3>
+    <img src="data:image/png;base64,{{ charts.price_hist }}" alt="Histogram cen">
+</div>
+
+<div class="chart">
+    <h3>Metraż vs Cena</h3>
+    <img src="data:image/png;base64,{{ charts.scatter }}" alt="Scatter plot">
+</div>
+
+<div class="chart">
+    <h3>Liczba pokoi</h3>
+    <img src="data:image/png;base64,{{ charts.rooms_bar }}" alt="Bar chart pokoi">
+</div>
+{% endif %}
+
+{% else %}
+<p style="color: #7f8c8d; font-style: italic;">Użyj wyszukiwania lub filtrów, aby zobaczyć wyniki.</p>
+{% endif %}
+
+</div>
+
+
 <script>
-// zapamiętywanie pozycji scrolla przed submitem
+// Zapamiętywanie pozycji scrolla przy każdym submicie formularza
 document.addEventListener('DOMContentLoaded', function() {
-    const searchForm = document.getElementById('search-form');
-    const similaritySelect = document.getElementById('similarity-select');
-    
-    // auto-submit przy zmianie sortowania
-    if (similaritySelect) {
-        similaritySelect.addEventListener('change', function() {
-            sessionStorage.setItem('scrollPos', window.scrollY);
-            searchForm.submit();
-        });
+    // Przywróć pozycję scrolla jeśli była zapisana
+    const savedScroll = sessionStorage.getItem('scrollPosition');
+    if (savedScroll) {
+        window.scrollTo(0, parseInt(savedScroll));
+        sessionStorage.removeItem('scrollPosition');
     }
     
-    // przywrócenie pozycji scrolla po załadowaniu
-    const savedPos = sessionStorage.getItem('scrollPos');
-    if (savedPos) {
-        window.scrollTo(0, parseInt(savedPos));
-        sessionStorage.removeItem('scrollPos');
+    // Dla wszystkich formularzy
+    const forms = document.querySelectorAll('form');
+    forms.forEach(function(form) {
+        form.addEventListener('submit', function() {
+            sessionStorage.setItem('scrollPosition', window.pageYOffset);
+        });
+    });
+    
+    // Dla selecta sortowania podobieństwa (auto-submit)
+    const similaritySelect = document.getElementById('similarity-select');
+    if (similaritySelect) {
+        similaritySelect.addEventListener('change', function() {
+            sessionStorage.setItem('scrollPosition', window.pageYOffset);
+            this.form.submit();
+        });
     }
 });
 </script>

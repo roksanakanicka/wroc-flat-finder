@@ -1,18 +1,17 @@
 from flask import Flask, render_template, request
-from wikipedia_parser import get_city_description
 
 from utils import (
     compute_tfidf, search_tfidf, get_db_connection, analyze_districts,
     load_documents_cached, get_filtered_apartments, create_charts,
-    create_map, calculate_similarities
+    create_map, calculate_similarity_for_doc, get_all_districts
 )
 
 app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
-def index():
+def index():    
     doc_ids, documents = load_documents_cached()
-    tfidf_docs, tokenized_docs = compute_tfidf(documents)
+    tfidf_docs, tokenized_docs, df_counts, N = compute_tfidf(documents)
     
     filters = {
         'min_rooms': request.form.get('min_rooms', type=int),
@@ -26,22 +25,20 @@ def index():
         'max_floor_count': request.form.get('max_floor_count', type=int),
         'balcony': request.form.get('balcony'),
         'elevator': request.form.get('elevator'),
-        'parking': request.form.get('parking')
+        'parking': request.form.get('parking'),
+        'district': request.form.get('district')
     }
-    
+
     sort_by = request.form.get('sort_by')
     search_query = request.form.get('search', '').strip()
     
     results = []
     map_html = None
     charts = {}
-    similarities = []
     
     if request.method == 'POST':
         if search_query:
-            # wyszukiwanie TF-IDF
-            from utils import calculate_similarity_for_doc
-            top_indices = search_tfidf(search_query, documents, tfidf_docs, top_n=50)
+            top_indices = search_tfidf(search_query, documents, tfidf_docs, top_n=20)
             
             if top_indices:
                 filtered_ids = [doc_ids[i] for i in top_indices]
@@ -62,13 +59,14 @@ def index():
                         result = id_to_row[_id]
                         orig_idx = top_indices[idx]
                         doc_tokens_set = set(tokenized_docs[orig_idx])
-                        sims = calculate_similarity_for_doc(search_query, tfidf_docs[orig_idx], doc_tokens_set)
+                        sims = calculate_similarity_for_doc(search_query, tfidf_docs[orig_idx], 
+                                                           doc_tokens_set, df_counts, N)
                         result['cosine_sim'] = sims['cosine']
                         result['jaccard_sim'] = sims['jaccard']
                         result['dice_sim'] = sims['dice']
                         results.append(result)
                 
-                # sortowanie po miarach podobieństwa
+                # Sortowanie po miarach podobieństwa
                 similarity_sort = request.form.get('similarity_sort')
                 if similarity_sort == 'cosine':
                     results.sort(key=lambda x: x.get('cosine_sim', 0), reverse=True)
@@ -79,7 +77,6 @@ def index():
             else:
                 results = []
         else:
-            # zwykłe filtrowanie SQL
             results = get_filtered_apartments(**filters, sort_by=sort_by)
         
         if results:
@@ -88,24 +85,29 @@ def index():
     
     district_stats = analyze_districts()
     
-    wiki_data = None
-    if request.form.get('show_wiki'):
-        wiki_data = get_city_description()
+    from wikipedia_parser import get_city_description
+    city_stats = get_city_description()
     
     similarity_sort = request.form.get('similarity_sort')
+    
+    try:
+        all_districts = get_all_districts()
+    except Exception as e:
+        all_districts = []
+    
     return render_template('index.html',
-                           results=results,
-                           filters=filters,
-                           sort_by=sort_by,
-                           similarity_sort=similarity_sort,
-                           map_html=map_html,
-                           charts=charts,
-                           wiki_data=wiki_data,
-                           district_stats=district_stats,
-                           search_query=search_query,
-                           enumerate=enumerate)
-                           
-                            
-                           
+                       results=results,
+                       filters=filters,
+                       sort_by=sort_by,
+                       similarity_sort=similarity_sort,
+                       map_html=map_html,
+                       charts=charts,
+                       city_stats=city_stats,
+                       district_stats=district_stats,
+                       search_query=search_query,
+                       enumerate=enumerate,
+                       all_districts=all_districts)
+
+
 if __name__ == '__main__':
     app.run(debug=True)
